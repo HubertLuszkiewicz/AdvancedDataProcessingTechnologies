@@ -1,0 +1,156 @@
+Lab 10 - Rozwiązania XQuery
+
+5.
+for $nazwisko in doc("db/bib/bib.xml")//author/last
+return $nazwisko
+
+6.
+for $book in doc("db/bib/bib.xml")//book
+for $autor in $book/author
+return 
+<ksiazka>
+    { $autor }
+    { $book/title }
+</ksiazka>
+
+7.
+for $b in doc("db/bib/bib.xml")//book
+for $a in $b/author
+let $tytul_tekst := $b/title/text()
+return 
+<ksiazka>
+    <autor>{ string-join(($a/last, $a/first), "") }</autor>
+    <tytul>{ $tytul_tekst }</tytul>
+</ksiazka>
+
+8.
+for $b in doc("db/bib/bib.xml")//book
+for $a in $b/author
+return 
+<ksiazka>
+    <autor>{ concat($a/last, " ", $a/first) }</autor>
+    <tytul>{ $b/title/text() }</tytul>
+</ksiazka>
+
+9.
+<wynik>
+{
+    for $b in doc("db/bib/bib.xml")//book,
+        $a in $b/author
+    return 
+    <ksiazka>
+        <autor>{ $a/last || " " || $a/first }</autor>
+        <tytul>{ $b/title/data() }</tytul>
+    </ksiazka>
+}
+</wynik>
+
+10.
+<imiona>
+{
+    for $osoba in doc("db/bib/bib.xml")//book[title="Data on the Web"]/author/first
+    return <imie>{ $osoba/text() }</imie>
+}
+</imiona>
+
+11.1
+doc("db/bib/bib.xml")//book[title eq "Data on the Web"]
+
+11.2
+for $ksiazka in doc("db/bib/bib.xml")//book
+where $ksiazka/title/text() = "Data on the Web"
+return $ksiazka
+
+12.
+<Data>
+{
+    for $b in doc("db/bib/bib.xml")//book
+    where contains($b/title, "Data")
+    return 
+        for $a in $b/author 
+        return <nazwisko>{ $a/last/text() }</nazwisko>
+}
+</Data>
+
+13.
+<Data>
+{
+    for $b in doc("db/bib/bib.xml")//book[title[contains(., "Data")]]
+    let $v_title := $b/title
+    let $v_authors := for $a in $b/author return <nazwisko>{ $a/last/text() }</nazwisko>
+    return ($v_title, $v_authors)
+}
+</Data>
+
+14.
+for $b in doc("db/bib/bib.xml")//book
+where count($b/author) < 3
+return $b/title
+
+15.
+for $b in doc("db/bib/bib.xml")//book
+let $licznik := count($b/author)
+return
+<ksiazka>
+    { $b/title }
+    <autorow>{ $licznik }</autorow>
+</ksiazka>
+
+16.
+let $lata_wydania := doc("db/bib/bib.xml")//book/@year
+return <przedzial>{ min($lata_wydania) } - { max($lata_wydania) }</przedzial>
+
+17.
+let $ceny_ksiazek := doc("db/bib/bib.xml")//book/price
+return <roznica>{ max($ceny_ksiazek) - min($ceny_ksiazek) }</roznica>
+
+18.
+<najtansze>
+{
+    let $min_val := min(doc("db/bib/bib.xml")//book/price)
+    for $b in doc("db/bib/bib.xml")//book
+    where $b/price = $min_val
+    return
+    <najtansza>
+        { $b/title }
+        { $b/author }
+    </najtansza>
+}
+</najtansze>
+
+19.
+for $nazwisko in distinct-values(doc("db/bib/bib.xml")//author/last)
+return
+<autor>
+    <last>{ $nazwisko }</last>
+    {
+        for $ksiazka in doc("db/bib/bib.xml")//book[author/last = $nazwisko]
+        return $ksiazka/title
+    }
+</autor>
+
+20.
+<wynik>
+{
+    collection("db/shakespeare")//PLAY/TITLE
+}
+</wynik>
+
+21.
+for $sztuka in collection("db/shakespeare")//PLAY
+where $sztuka//LINE[contains(., "or not to be")]
+return $sztuka/TITLE
+
+22.
+<wynik>
+{
+    for $p in collection("db/shakespeare")//PLAY
+    let $nazwa_sztuki := $p/TITLE
+    return
+    <sztuka tytul="{ $nazwa_sztuki }">
+        <postaci>{ count($p//PERSONA) }</postaci>
+        <aktow>{ count($p/ACT) }</aktow>
+        <scen>{ count($p//SCENE) }</scen>
+    </sztuka>
+}
+</wynik>
